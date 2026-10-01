@@ -1,0 +1,46 @@
+Metadata-Version: 2.4
+Name: retrylab
+Version: 0.1.0
+Summary: Idempotency fuzzer and bug zoo
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: httpx>=0.27.0
+Requires-Dist: openapi-core>=0.19.0
+Requires-Dist: prance>=23.6.21.0
+Requires-Dist: openapi-spec-validator>=0.7.1
+Requires-Dist: hypothesis>=6.100.0
+Requires-Dist: hypothesis-jsonschema>=0.23.0
+Requires-Dist: typer>=0.12.0
+Requires-Dist: rich>=13.7.1
+Requires-Dist: pydantic>=2.7.0
+Requires-Dist: fastapi>=0.110.0
+Requires-Dist: uvicorn>=0.29.0
+Requires-Dist: sqlalchemy>=2.0.29
+Requires-Dist: asyncpg>=0.29.0
+Requires-Dist: toxiproxy-python
+Provides-Extra: dev
+Requires-Dist: pytest>=8.1.1; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23.6; extra == "dev"
+Requires-Dist: mutmut>=2.4.4; extra == "dev"
+Requires-Dist: ruff>=0.3.5; extra == "dev"
+Requires-Dist: mypy>=1.9.0; extra == "dev"
+Requires-Dist: pre-commit>=3.7.0; extra == "dev"
+Requires-Dist: mkdocs-material>=9.5.17; extra == "dev"
+Requires-Dist: testcontainers>=4.4.0; extra == "dev"
+Dynamic: license-file
+
+# RetryLab
+
+An idempotency fuzzer and bug zoo.
+
+## Architecture
+RetryLab tests idempotency guarantees by running scenarios concurrently and comparing the final database and mock-service state against a single clean run.
+
+## Development
+This project uses `uv` for dependency management.
+
+```bash
+uv venv
+uv pip install -e ".[dev]"
+```
