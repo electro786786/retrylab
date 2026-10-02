@@ -30,5 +30,3 @@ services:
       - "8000:8000"
     depends_on:
       - db
-    profiles:
-      - donotstart # we will enable this in week 2
