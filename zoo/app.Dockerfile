@@ -5,7 +5,7 @@ WORKDIR /app
 # Install dependencies (since we used uv, we can just export requirements or install directly)
 COPY pyproject.toml .
 # We install dependencies via pip for simplicity in the docker image, or copy from a requirements.txt
-RUN pip install fastapi uvicorn sqlalchemy asyncpg pydantic pydantic-settings
+RUN pip install fastapi uvicorn "sqlalchemy[asyncio]" asyncpg pydantic pydantic-settings
 
 COPY zoo/app /app/app
 
