@@ -26,6 +26,10 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:password@db:5432/zoo
       MOCK_URL: http://mock_downstream:8001
+      BUG_1_RACE_CONDITION: ${BUG_1_RACE_CONDITION:-False}
+      BUG_2_NO_IDEMPOTENCY: ${BUG_2_NO_IDEMPOTENCY:-False}
+      BUG_3_MISSING_UNIQUE_CONSTRAINT: ${BUG_3_MISSING_UNIQUE_CONSTRAINT:-False}
+      BUG_4_UNSCOPED_KEY: ${BUG_4_UNSCOPED_KEY:-False}
     ports:
       - "8000:8000"
     depends_on:
