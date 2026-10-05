@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: zoo
+    ports:
+      - "5433:5432"
+
+  mock_downstream:
+    build: 
+      context: .
+      dockerfile: zoo/mock.Dockerfile
+    ports:
+      - "8001:8001"
+    profiles:
+      - donotstart # we will enable this in week 3
+
+  target_app:
+    build:
+      context: .
+      dockerfile: zoo/app.Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:password@db:5432/zoo
+      MOCK_URL: http://mock_downstream:8001
+      BUG_1_RACE_CONDITION: ${BUG_1_RACE_CONDITION:-False}
+      BUG_2_NO_IDEMPOTENCY: ${BUG_2_NO_IDEMPOTENCY:-False}
+      BUG_3_MISSING_UNIQUE_CONSTRAINT: ${BUG_3_MISSING_UNIQUE_CONSTRAINT:-False}
+      BUG_4_UNSCOPED_KEY: ${BUG_4_UNSCOPED_KEY:-False}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
