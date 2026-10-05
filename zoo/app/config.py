@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://postgres:password@localhost:5433/zoo"
-    mock_url: str = "http://localhost:8001"
+    mock_url: str = "http://localhost:8002"
 
     # ── Bug feature flags ───────────────────────────────────────────────────────
 

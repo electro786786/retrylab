@@ -15,7 +15,7 @@ services:
       context: .
       dockerfile: zoo/mock.Dockerfile
     ports:
-      - "8001:8001"
+      - "8002:8001"
 
   target_app:
     build:

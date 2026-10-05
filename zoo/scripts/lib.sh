@@ -5,7 +5,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 APP_URL="http://localhost:8000"
-MOCK_URL="http://localhost:8001"
+MOCK_URL="http://localhost:8002"
 
 # Colour codes
 RED='\033[0;31m'
