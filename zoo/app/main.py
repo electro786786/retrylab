@@ -31,7 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.config import settings
-from app.database import Base, engine, get_db
+from app.database import AsyncSessionLocal, Base, engine, get_db
 from app.models import Customer, IdempotencyKey, Payment, Refund, Transfer, Wallet
 from app.schemas import (
     CustomerCreate,
@@ -332,9 +332,21 @@ async def create_payment(
 
     # ── Bug 8: save the key BEFORE doing any real work ────────────────────────
     if settings.bug_8_key_saved_before_work:
-        # We stamp a fake success response onto the key right now.
-        # If the server crashes below this point, the retry will serve this
-        # cached "success" even though no payment row was ever created.
+        # ── Bug 8 simulation ──────────────────────────────────────────────────
+        # In a real buggy app, the code would commit the idempotency key with
+        # a success status BEFORE doing the actual work. If the process is then
+        # killed (OOM, SIGKILL), the key is durably committed but the work never
+        # ran. On retry the cached "success" is returned — a phantom success.
+        #
+        # Simulation mechanics:
+        #   Step 1 — commit the main session so the key row (status_code=None)
+        #            is durable and visible to other connections.
+        #   Step 2 — open an *independent* session, update the row to
+        #            status_code=200 with a fake response body, commit it.
+        #            This second commit survives the upcoming RuntimeError
+        #            because it is already done; the RuntimeError only affects
+        #            code that runs after it.
+        #   Step 3 — raise RuntimeError to simulate the process crash.
         premature_response = {
             "id": "pending",
             "customer_id": payment.customer_id,
@@ -343,10 +355,17 @@ async def create_payment(
             "status": "succeeded",
             "provider_charge_id": None,
         }
-        await save_idempotency_result(
-            db, idempotency_key, user_id, request.url.path, 200, premature_response
-        )
-        # Simulate a crash (e.g., OOM kill) — the actual payment is never made.
+        # Step 1: make the key row visible to other connections.
+        await db.commit()
+
+        # Step 2: stamp the premature success in a separate session.
+        async with AsyncSessionLocal() as sep:
+            await save_idempotency_result(
+                sep, idempotency_key, user_id, request.url.path, 200, premature_response
+            )
+            await sep.commit()
+
+        # Step 3: simulate crash — payment work never runs.
         if os.environ.get("BUG_8_CRASH_AFTER_KEY_SAVE", "0") == "1":
             raise RuntimeError("Simulated crash after key save (Bug 8)")
 
