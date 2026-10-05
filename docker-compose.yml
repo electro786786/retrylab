@@ -11,13 +11,11 @@ services:
       - "5433:5432"
 
   mock_downstream:
-    build: 
+    build:
       context: .
       dockerfile: zoo/mock.Dockerfile
     ports:
       - "8001:8001"
-    profiles:
-      - donotstart # we will enable this in week 3
 
   target_app:
     build:
@@ -30,7 +28,14 @@ services:
       BUG_2_NO_IDEMPOTENCY: ${BUG_2_NO_IDEMPOTENCY:-False}
       BUG_3_MISSING_UNIQUE_CONSTRAINT: ${BUG_3_MISSING_UNIQUE_CONSTRAINT:-False}
       BUG_4_UNSCOPED_KEY: ${BUG_4_UNSCOPED_KEY:-False}
+      BUG_5_NON_ATOMIC_DUAL_WRITE: ${BUG_5_NON_ATOMIC_DUAL_WRITE:-False}
+      BUG_5_CRASH_AFTER_PROVIDER: ${BUG_5_CRASH_AFTER_PROVIDER:-0}
+      BUG_6_LOST_UPDATE: ${BUG_6_LOST_UPDATE:-False}
+      BUG_7_SILENT_PAYLOAD_MISMATCH: ${BUG_7_SILENT_PAYLOAD_MISMATCH:-False}
+      BUG_8_KEY_SAVED_BEFORE_WORK: ${BUG_8_KEY_SAVED_BEFORE_WORK:-False}
+      BUG_8_CRASH_AFTER_KEY_SAVE: ${BUG_8_CRASH_AFTER_KEY_SAVE:-0}
     ports:
       - "8000:8000"
     depends_on:
       - db
+      - mock_downstream
