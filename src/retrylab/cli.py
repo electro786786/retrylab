@@ -5,7 +5,7 @@ app = typer.Typer(help="RetryLab: Idempotency fuzzer")
 console = Console()
 
 @app.command()
-def run(spec: str = typer.Option(..., help="Path to OpenAPI spec")):
+def run(spec: str = typer.Option(..., help="Path to OpenAPI spec")) -> None:
     """
     Run the idempotency fuzzer against a target.
     """

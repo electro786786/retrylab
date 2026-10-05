@@ -1,7 +1,10 @@
-from sqlalchemy import Column, String, Integer, JSON, UniqueConstraint
-from app.database import Base
-from app.config import settings
 import uuid
+
+from sqlalchemy import JSON, Column, Integer, String, UniqueConstraint
+
+from app.config import settings
+from app.database import Base
+
 
 def generate_uuid():
     return str(uuid.uuid4())

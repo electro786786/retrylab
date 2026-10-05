@@ -1,5 +1,5 @@
-import os
 from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://postgres:password@localhost:5433/zoo"

@@ -1,16 +1,23 @@
-import asyncio
-from fastapi import FastAPI, Depends, Header, Request, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.dialects.postgresql import insert
-import json
-from app.database import get_db, engine, Base
-from app.models import IdempotencyKey, Customer, Payment, Refund, Transfer
-from app.schemas import (CustomerCreate, CustomerResponse, PaymentCreate, PaymentResponse,
-                         RefundCreate, RefundResponse, TransferCreate, TransferResponse)
+
 from app.config import settings
-from sqlalchemy.exc import IntegrityError
+from app.database import Base, engine, get_db
+from app.models import Customer, IdempotencyKey, Payment, Refund, Transfer
+from app.schemas import (
+    CustomerCreate,
+    CustomerResponse,
+    PaymentCreate,
+    PaymentResponse,
+    RefundCreate,
+    RefundResponse,
+    TransferCreate,
+    TransferResponse,
+)
 
 app = FastAPI(title="Bug Zoo Payments API")
 
