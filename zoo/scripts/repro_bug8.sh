@@ -24,6 +24,8 @@ CUST=$(curl -sf -X POST "$APP_URL/customers" \
 CUST_ID=$(echo "$CUST" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
 info "Customer id: $CUST_ID"
 
+START_COUNT=$(curl -sf "$APP_URL/admin/payments/count" | python3 -c "import sys,json; print(json.load(sys.stdin)['count'])")
+
 info "Attempt 1 — app will crash after saving the key but before running payment…"
 curl -sf -X POST "$APP_URL/payments" \
     -H "Idempotency-Key: $KEY" \
@@ -40,8 +42,9 @@ R=$(curl -sf -X POST "$APP_URL/payments" \
     -d "{\"customer_id\":\"$CUST_ID\",\"amount\":1000}")
 info "Retry response: $R"
 
-COUNT=$(curl -sf "$APP_URL/admin/payments/count" | python3 -c "import sys,json; print(json.load(sys.stdin)['count'])")
-info "Payment rows in DB: $COUNT"
+END_COUNT=$(curl -sf "$APP_URL/admin/payments/count" | python3 -c "import sys,json; print(json.load(sys.stdin)['count'])")
+COUNT=$((END_COUNT - START_COUNT))
+info "New payment rows created: $COUNT"
 
 if [ "$COUNT" -eq 0 ]; then
     fail "Retry returned success but no Payment row exists — phantom success! Bug confirmed."
@@ -57,6 +60,9 @@ CUST=$(curl -sf -X POST "$APP_URL/customers" \
     -H "Content-Type: application/json" \
     -d '{"name":"Bug8 Fixed","email":"bug8fixed@example.com"}')
 CUST_ID=$(echo "$CUST" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+
+START_COUNT=$(curl -sf "$APP_URL/admin/payments/count" | python3 -c "import sys,json; print(json.load(sys.stdin)['count'])")
+
 curl -sf -X POST "$APP_URL/payments" \
     -H "Idempotency-Key: $KEY-fixed" \
     -H "Content-Type: application/json" \
@@ -65,7 +71,9 @@ curl -sf -X POST "$APP_URL/payments" \
     -H "Idempotency-Key: $KEY-fixed" \
     -H "Content-Type: application/json" \
     -d "{\"customer_id\":\"$CUST_ID\",\"amount\":500}" > /dev/null
-COUNT=$(curl -sf "$APP_URL/admin/payments/count" | python3 -c "import sys,json; print(json.load(sys.stdin)['count'])")
+
+END_COUNT=$(curl -sf "$APP_URL/admin/payments/count" | python3 -c "import sys,json; print(json.load(sys.stdin)['count'])")
+COUNT=$((END_COUNT - START_COUNT))
 if [ "$COUNT" -eq 1 ]; then
     pass "Fixed: exactly 1 payment row created for 2 requests with the same key."
 else

@@ -19,11 +19,14 @@ echo "========================================"
 echo "  RetryLab Week 3 - Smoke Test"
 echo "========================================"
 
+KEY_CUST="smoke-cust-$(date +%s)"
+KEY_PAY="smoke-pay-$(date +%s)"
+
 # ── 1. Create customer ────────────────────────────────────────────────────────
 echo ""
 echo "1. Create customer"
 R1=$(curl -sf -X POST "$APP/customers" \
-    -H "Idempotency-Key: smoke-1" \
+    -H "Idempotency-Key: $KEY_CUST" \
     -H "Content-Type: application/json" \
     -d '{"name":"Alice","email":"alice@example.com"}')
 ID1=$(echo "$R1" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['id'])")
@@ -35,7 +38,7 @@ info "Customer id=$ID1  wallet_balance=$BAL"
 echo ""
 echo "2. Retry same key -> same id"
 R2=$(curl -sf -X POST "$APP/customers" \
-    -H "Idempotency-Key: smoke-1" \
+    -H "Idempotency-Key: $KEY_CUST" \
     -H "Content-Type: application/json" \
     -d '{"name":"Alice","email":"alice@example.com"}')
 ID2=$(echo "$R2" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['id'])")
@@ -46,7 +49,7 @@ info "Retry id=$ID2"
 echo ""
 echo "3. Same key, different payload -> HTTP 422"
 STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$APP/customers" \
-    -H "Idempotency-Key: smoke-1" \
+    -H "Idempotency-Key: $KEY_CUST" \
     -H "Content-Type: application/json" \
     -d '{"name":"Mallory","email":"mallory@example.com"}')
 info "HTTP status=$STATUS"
@@ -56,7 +59,7 @@ info "HTTP status=$STATUS"
 echo ""
 echo "4. Create payment -> calls mock downstream"
 R3=$(curl -sf -X POST "$APP/payments" \
-    -H "Idempotency-Key: smoke-pay-1" \
+    -H "Idempotency-Key: $KEY_PAY" \
     -H "Content-Type: application/json" \
     -d "{\"customer_id\":\"$ID1\",\"amount\":500,\"currency\":\"USD\"}")
 PAY_ID=$(echo "$R3" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['id'])")
@@ -67,7 +70,7 @@ info "Payment id=$PAY_ID  provider_charge_id=$CHG_ID"
 # ── 5. Mock downstream recorded exactly 1 call ───────────────────────────────
 echo ""
 echo "5. Mock downstream call count for payment key = 1"
-COUNT=$(curl -sf "$MOCK/admin/calls/smoke-pay-1" \
+COUNT=$(curl -sf "$MOCK/admin/calls/$KEY_PAY" \
     | python3 -c "import sys,json; print(json.load(sys.stdin)['call_count'])")
 info "Call count=$COUNT"
 [ "$COUNT" = "1" ] && pass "Provider called exactly once" || fail "Expected 1 call, got $COUNT"
@@ -76,10 +79,10 @@ info "Call count=$COUNT"
 echo ""
 echo "6. Duplicate payment key -> mock call count stays at 1"
 curl -sf -X POST "$APP/payments" \
-    -H "Idempotency-Key: smoke-pay-1" \
+    -H "Idempotency-Key: $KEY_PAY" \
     -H "Content-Type: application/json" \
     -d "{\"customer_id\":\"$ID1\",\"amount\":500,\"currency\":\"USD\"}" > /dev/null
-COUNT2=$(curl -sf "$MOCK/admin/calls/smoke-pay-1" \
+COUNT2=$(curl -sf "$MOCK/admin/calls/$KEY_PAY" \
     | python3 -c "import sys,json; print(json.load(sys.stdin)['call_count'])")
 info "Call count after retry=$COUNT2"
 [ "$COUNT2" = "1" ] && pass "No double charge - count still 1" || fail "Double charge! Count=$COUNT2"
